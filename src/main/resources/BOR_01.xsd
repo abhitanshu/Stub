@@ -40,7 +40,7 @@
         </xsd:complexType>
     </xsd:element>
 
-    <!-- Connector Interface definitions Request -->
+    <!-- Request -->
     <xsd:element name="ProcessStateInput">
         <xsd:complexType>
             <xsd:sequence>
