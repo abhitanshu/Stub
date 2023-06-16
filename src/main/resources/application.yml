@@ -1,0 +1,194 @@
+spring:
+  config:
+    import:
+      - bic-destination-config.yml
+      - malt-mapping.yml
+  data:
+    cassandra:
+      contact-points: localhost
+      keyspace-name: rtpe_bookingorchestrator
+      local-datacenter: DC1
+      max-nodes-per-remote-dc: 2
+      max-retries: 1
+      password: cassandra
+      port: 9042
+      ssl: false
+      request:
+        consistency: ONE
+        timeout: 2s
+      retry-delay: 50ms
+      username: cassandra
+
+http-client:
+  peer-token:
+    jwt: 'classpath:local-peer-token.jwt'
+  routing-client:
+    defaults:
+      global-request-timeout: 5s
+      individual-request-timeout: 1s
+    endpoints:
+      "[/endpoint/api.ing.com/POST/v4/accounts/location/search]":
+        individual-request-timeout: 800ms
+        idempotent: 0.05
+
+server:
+  max-http-header-size: 1MB # check why on the local config YAML
+  servlet:
+    contextPath: /bookingorchestrator
+  port: 8081
+  ssl:
+    key-store: 'classpath:clrv0000239522.ic.ing.net.p12'
+    key-store-type: 'PKCS12'
+    key-alias: clrv0000239522.ic.ing.net
+    key-store-password: rtpe-bor
+    key-password: rtpe-bor
+    trust-store-password: changeme
+api-trust-tokens:
+  access-tokens:
+    signature:
+      key:
+        certificate-fingerprint: 73:1D:13:B1:91:5B:B4:86:72:23:A7:FC:00:C1:0F:0D:B2:EF:81:7F
+        password: keypassword
+    keystore:
+      password: keystorepassword
+      location: /accesstokens.jks
+  peer-tokens:
+    keystore:
+      location: /peertokens.jks
+      password: publicpass
+    signature:
+      key:
+        certificate-fingerprint: 73:1D:13:B1:91:5B:B4:86:72:23:A7:FC:00:C1:0F:0D:B2:EF:81:7F
+        password: keypassword
+
+servicediscovery:
+  enabled: 'false'
+merak:
+  tracing:
+    reporting:
+      kafka:
+        sender:
+          queue-size: '2000000'
+        enabled: 'false'
+  filter:
+    local-access-token-filter:
+      enabled: 'true'
+    local-peer-token-filter:
+      enabled: 'true'
+    peer-token-filter:
+      allowed-peers: 'Apigateway,apigatewayintranet,Nginxapi,InternalGateway,client_0,AppConfigurationAPI,accesstokens-dev2'
+    request-dumper-filter:
+  application:
+    country-code: NL
+    ing-identifier: application-business-1712317
+    purpose-code: P01415
+  insights:
+    kafka:
+      tls-enabled: 'false'
+  logging:
+    kafka:
+      enabled: 'false'  # disable logging kafka for local
+      tls-enabled: 'false'
+  sema:
+    kafka:
+      enabled: 'false' # disable sema for local
+      tls-enabled: 'false'
+service:
+  manifest:
+    trust-store:
+      password: publicpass
+  instance:
+    datacenter: N.A.
+    operational-mode:
+      file:
+        interval: '500'
+        location: classpath:mode
+    host: localhost
+
+dtab:
+  base: "/endpoint => /$/inet/localhost/8084"
+
+management:
+  server:
+    port: 10081
+    ssl:
+      key-store: 'classpath:clrv0000239522.ic.ing.net.p12'
+      key-password: rtpe-bor
+      key-store-password: rtpe-bor
+      key-alias: 'clrv0000239522.ic.ing.net'
+      trust-store: 'classpath:http-trust.jks'
+      trust-store-password: changeme
+      enabled: false
+      protocol: TLS
+      enabled-protocols: TLSv1.2
+
+bor:
+  queue:
+    tibcoems:
+      common:
+        initial-context-factory: "com.tibco.tibjms.naming.TibjmsInitialContextFactory"
+        naming-factory-object: "com.tibco.tibjms.custom.CustomObjectFactory:com.tibco.tibjms.naming.TibjmsObjectFactory:com.tibco.tibjms.naming.tibjmsnaming.tibjmsnamingURLContextFactory"
+        provider-url: "tcp://localhost:7222"
+        security-protocol: "tcp"
+        security:
+          principal: "anonymous"
+          credentials: ""
+      rtpe:
+        connection-factory: "RTPE_QUEUE"
+        username: "admin"
+        password: ""
+        session-cache-size: 5
+        queues:
+          DVT_BOOK_REQUEST:
+            type: input
+            paymentEngine: DVT
+            name: TS.BOR.DNL_LIOM_BOR.001.Oneway.DVT.Book.001
+            enabled: true
+            core-pool-size: 5
+            max-pool-size: 10
+            queue-capacity: 100
+
+          SEND_CREDIT_TRANSACTION_GBS:
+            type: output
+            name: TS.BOR.DNL_LIOM_RTPE.001.Oneway.SendCreditTransaction.001 #request
+            enabled: true
+
+          EVENT_PROCESSOR:
+            type: input
+            name: TS.BOR.DNL_LIOM_BOR.001.Oneway.EventProcessor.001 #response
+            enabled: true
+            core-pool-size: 5
+            max-pool-size: 10
+            queue-capacity: 100
+
+          CTP_FEEDBACK:
+            type: output
+            paymentEngine: CTP
+            name: TS.RTPE.DNL_LIOM_RTPE.001.Oneway.NotifyBookingResult.001 #Cabi queue
+            enabled: true
+      dovetail:
+        connection-factory: "RTPE_QUEUE"
+        username: "admin"
+        password: ""
+        session-cache-size: 5
+        queues:
+          DVT_FEEDBACK:
+            type: output
+            paymentEngine: DVT
+            name: TS.DTCB.DNL_LIOM_BOR.001.Notification.NotifyBookingResult.001
+            enabled: true
+
+cassandra:
+  session-keyspace: rtpe_bookingorchestrator
+
+workflow:
+  kafka:
+    logger:
+      topic: wbs-rtpe-logging-topic
+      send-timeout: 1s
+
+classification:
+  processFlowsFolder: "classpath:processFlows/*.{xml|process}"
+  classificationCSV: "classpath:classification/classification.csv"
+  classificationBinding: "classpath:classification/classification_binding.csv"
+  connectorConfig: "classpath:classification/connector_config.csv"

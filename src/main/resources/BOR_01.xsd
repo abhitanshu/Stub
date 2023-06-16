@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:bor="http://www.ing.com/NL/ccc/xsd/BOR_01"
+            xmlns:cabi="http://www.ing.com/NL/AMS/xsd/AMSInterface.001.001.15"
+            targetNamespace="http://www.ing.com/NL/ccc/xsd/BOR_01"
+            elementFormDefault="qualified">
+    <xsd:import namespace="http://www.ing.com/NL/AMS/xsd/AMSInterface.001.001.15" schemaLocation="AMSInterface.001.001.15.xsd"/>
+    <xsd:complexType name="KeyValuePair">
+        <xsd:sequence>
+            <xsd:element name="Key" type="xsd:string"/>
+            <xsd:element name="Value" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:element name="EventData" type="bor:KeyValuePair"/>
+    <xsd:element name="Event"> <!-- Response -->
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="CabiTxEntityId" type="xsd:string"/>
+                <xsd:element name="Process" type="xsd:string"/>
+                <xsd:element name="SequenceId" type="xsd:int"/>
+                <xsd:element name="Result" type="xsd:string"/>
+                <xsd:element name="ReasonCode" type="xsd:string" minOccurs="0"/>
+                <xsd:element name="Source" type="xsd:string"/>
+                <xsd:element name="SourceId" type="xsd:string"/>
+                <xsd:element ref="bor:EventData" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="Context">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="CabiTxEntityId" type="xsd:string"/>
+                <xsd:element name="DebitDestination" type="xsd:string"/>
+                <xsd:element name="CreditDestination" type="xsd:string"/>
+                <xsd:element name="OperationType" type="xsd:string"/>
+                <xsd:element name="PaymentEngine" type="xsd:string"/>
+                <xsd:element name="ContextData" type="bor:KeyValuePair" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element ref="cabi:BookRq"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <!-- Connector Interface definitions Request -->
+    <xsd:element name="ProcessStateInput">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="Config" minOccurs="0">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:any namespace="##any" processContents="skip"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+                <xsd:element name="CurrentState" type="xsd:string"/>
+                <xsd:element name="CurrentSequenceId" type="xsd:int"/>
+                <xsd:element ref="bor:PreviousState" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element ref="bor:Context"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="PreviousState">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="SequenceId" type="xsd:int"/>
+                <xsd:element name="Name" type="xsd:string"/>
+                <xsd:element name="Timestamp" type="xsd:dateTime"/>
+                <xsd:sequence minOccurs="0">
+                    <xsd:element name="Result" type="xsd:string"/>
+                    <xsd:element name="ReasonCode" type="xsd:string" minOccurs="0"/>
+                </xsd:sequence>
+                <xsd:element ref="bor:EventData" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+</xsd:schema>
